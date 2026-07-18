@@ -1,0 +1,132 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-cream text-charcoal font-inter;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  button {
+    @apply font-poppins;
+  }
+}
+
+/* ============================================
+   HERO PAGE ANIMATIONS - Add to index.css
+   ============================================ */
+
+/* Falling leaf animation - falls down while rotating */
+@keyframes leaf-fall {
+  0% {
+    transform: translateY(0) translateX(0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  25% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(450px) translateX(var(--drift-x, 50px)) rotate(720deg) scale(0.2);
+    opacity: 0;
+  }
+}
+
+/* Gentle sway for natural leaf movement */
+@keyframes leaf-sway {
+  0% {
+    margin-left: -30px;
+    transform: rotate(-5deg);
+  }
+  100% {
+    margin-left: 30px;
+    transform: rotate(5deg);
+  }
+}
+
+/* Float animation for badge */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+/* Slide up reveal for text */
+@keyframes slide-up {
+  0% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Fade in */
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
+   TAILWIND CUSTOM CLASSES
+   ============================================ */
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.8s ease-out forwards;
+  opacity: 0;
+}
+
+/* 3D perspective for image hover */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.rotate-y-2 {
+  transform: rotateY(2deg);
+}
+
+/* Smooth scrollbar for the page */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F5F0E6;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #87A878;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2D6A4F;
+}
