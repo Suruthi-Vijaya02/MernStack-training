@@ -1,36 +1,50 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 
 const Hero = () => {
+  const navigate = useNavigate();
+
   return (
-    <section className="bg-blush py-16 px-4">
-      <div className="max-w-6xl mx-auto grid md:grid-cols-2 items-center gap-10">
+    <section className="pt-40 pb-24 px-4">
+      <div className="max-w-4xl mx-auto text-center">
+        <motion.p
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-white/70 text-sm md:text-base font-inter tracking-widest uppercase mb-4"
+        >
+          Welcome to the Garden
+        </motion.p>
 
-        <div className="w-full">
-          <img
-            src="/src/assets/banners/hero.jpeg"
-            alt="Plants"
-            className="rounded-2xl w-full h-[300px] md:h-[480px] object-cover shadow-md"
-          />
-        </div>
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.15 }}
+          className="text-white font-poppins font-bold text-4xl md:text-6xl lg:text-7xl leading-tight mb-6 drop-shadow-lg"
+        >
+          Grow Your Little<br />Slice of Green
+        </motion.h1>
 
-        <div className="flex flex-col justify-center">
-          <p className="text-forest font-semibold text-3xl md:text-5xl mb-3 font-poppins leading-tight">
-            Welcome to Fresh Farm
-          </p>
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.3 }}
+          className="text-white/80 text-lg md:text-xl font-poppins mb-8 max-w-2xl mx-auto leading-relaxed"
+        >
+          <span className="text-farmPink font-semibold">Fresh Farm</span> brings healthy plants, seeds, and garden essentials to your door — for the balcony, the backyard, or the windowsill. Indoors or outdoors, we deliver the green.
+        </motion.p>
 
-          <h1 className="text-moss text-xl md:text-2xl mb-4 font-poppins font-bold">
-            Bring Freshness to Your Home
-          </h1>
-          
-          <p className="text-charcoal text-base md:text-lg mb-6 font-poppins leading-relaxed">
-            <span className="text-sage font-semibold">Fresh Farm</span> - makes your home a garden of fresh and healthy plants. We offer a wide selection of plants and seeds to meet your gardening needs. Shop with us and add a touch of nature to your home.
-          </p>
-          
-          <button className="bg-sage text-cream py-2.5 px-6 rounded-xl shadow-sm hover:shadow-md hover:bg-forest transition-all duration-300 font-poppins font-medium w-fit">
-            Shop Now
-          </button>
-        </div>
-
+        <motion.button
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.45 }}
+          whileHover={{ scale: 1.03 }}
+          onClick={() => navigate("/plants")}
+          className="bg-sage text-cream py-3 px-8 rounded-xl shadow-md hover:shadow-lg hover:bg-forest transition-all duration-300 font-poppins font-medium text-lg"
+        >
+          Start Growing
+        </motion.button>
       </div>
     </section>
   );

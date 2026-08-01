@@ -20,6 +20,7 @@ export default {
       fontFamily: {
         poppins: ["Poppins", "sans-serif"],
         inter: ["Inter", "sans-serif"],
+        logo: ['"Fraunces"', 'serif']
       },
     },
   },
