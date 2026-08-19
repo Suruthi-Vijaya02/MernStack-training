@@ -2,7 +2,6 @@ const User = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-
 // REGISTER USER
 const registerUser = async (req, res) => {
   try {
@@ -16,7 +15,6 @@ const registerUser = async (req, res) => {
     }
 
     const existingUser = await User.findOne({ email });
-
     if (existingUser) {
       return res.status(400).json({
         success: false,
@@ -34,11 +32,9 @@ const registerUser = async (req, res) => {
     });
 
     const token = jwt.sign(
-      { id: newUser._id },
+      { id: newUser._id, role: newUser.role },   // ← ADDED role
       "secret_key",
-      {
-        expiresIn: "8h",
-      }
+      { expiresIn: "8h" }
     );
 
     res.status(201).json({
@@ -47,10 +43,8 @@ const registerUser = async (req, res) => {
       token,
       user: newUser,
     });
-
   } catch (err) {
     console.log(err);
-
     res.status(500).json({
       success: false,
       message: "Internal Server Error",
@@ -58,13 +52,9 @@ const registerUser = async (req, res) => {
   }
 };
 
-
-
-
 // LOGIN USER
 const loginUser = async (req, res) => {
   try {
-
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -75,7 +65,6 @@ const loginUser = async (req, res) => {
     }
 
     const user = await User.findOne({ email });
-
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -83,11 +72,7 @@ const loginUser = async (req, res) => {
       });
     }
 
-    const isPasswordValid = await bcrypt.compare(
-      password,
-      user.password
-    );
-
+    const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(400).json({
         success: false,
@@ -96,11 +81,9 @@ const loginUser = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user._id },
+      { id: user._id, role: user.role },   // ← ADDED role
       "secret_key",
-      {
-        expiresIn: "8h",
-      }
+      { expiresIn: "8h" }
     );
 
     res.status(200).json({
@@ -109,141 +92,80 @@ const loginUser = async (req, res) => {
       token,
       user,
     });
-
   } catch (err) {
-
     console.log(err);
-
     res.status(500).json({
       success: false,
       message: "Internal Server Error",
     });
-
   }
 };
-
-
 
 // GET ALL USERS
 const getAllUsers = async (req, res) => {
   try {
-
     const users = await User.find().select("-password");
-
-    res.status(200).json({
-      success: true,
-      users,
-    });
-
+    res.status(200).json({ success: true, users });
   } catch (err) {
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch users",
-    });
-
+    res.status(500).json({ success: false, message: "Failed to fetch users" });
   }
 };
 
-
-
-//getById
+// GET USER BY ID
 const getUserById = async (req, res) => {
   try {
-
     const user = await User.findById(req.params.id).select("-password");
-
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
+      return res.status(404).json({ success: false, message: "User not found" });
     }
-
-    res.status(200).json({
-      success: true,
-      user,
-    });
-
+    res.status(200).json({ success: true, user });
   } catch (err) {
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch user",
-    });
-
+    res.status(500).json({ success: false, message: "Failed to fetch user" });
   }
 };
 
-
+// GET LOGGED-IN USER PROFILE (/me) ← NEW!
+const getMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+    res.status(200).json({ success: true, user });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Failed to fetch user profile" });
+  }
+};
 
 // UPDATE USER
-
-
 const updateUser = async (req, res) => {
   try {
-
     const { name, email, role } = req.body;
-
     const user = await User.findById(req.params.id);
-
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
+      return res.status(404).json({ success: false, message: "User not found" });
     }
-
     user.name = name || user.name;
     user.email = email || user.email;
     user.role = role || user.role;
-
     await user.save();
 
-    res.status(200).json({
-      success: true,
-      message: "User updated successfully",
-      user,
-    });
-
+    res.status(200).json({ success: true, message: "User updated successfully", user });
   } catch (err) {
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to update user",
-    });
-
+    res.status(500).json({ success: false, message: "Failed to update user" });
   }
 };
-
-
-
 
 // DELETE USER
 const deleteUser = async (req, res) => {
   try {
-
     const deletedUser = await User.findByIdAndDelete(req.params.id);
-
     if (!deletedUser) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
+      return res.status(404).json({ success: false, message: "User not found" });
     }
-
-    res.status(200).json({
-      success: true,
-      message: "User deleted successfully",
-    });
-
+    res.status(200).json({ success: true, message: "User deleted successfully" });
   } catch (err) {
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to delete user",
-    });
-
+    res.status(500).json({ success: false, message: "Failed to delete user" });
   }
 };
 
@@ -252,6 +174,7 @@ module.exports = {
   loginUser,
   getAllUsers,
   getUserById,
+  getMe,        // ← EXPORTED
   updateUser,
   deleteUser,
 };

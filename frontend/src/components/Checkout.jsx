@@ -1,191 +1,216 @@
-import React from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { useSelector, useDispatch } from "react-redux"
+import axios from "axios"
+import { clearCart } from "@/features/cart/cartSlice"
 
 const Checkout = () => {
   const navigate = useNavigate()
+  const dispatch = useDispatch()
 
-  // Mock order data — replace with actual order state/context
-  const orderId = Math.random().toString(36).substring(2, 10).toUpperCase()
-  const orderDate = new Date().toLocaleDateString('en-IN', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
+  const cartItems = useSelector((state) => state.cart.items)
+
+  const [formData, setFormData] = useState({
+    fullName: "",
+    phone: "",
+    addressLine: "",
+    city: "",
+    state: "",
+    pincode: "",
   })
-  const estimatedDelivery = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
+  const [paymentMethod, setPaymentMethod] = useState("cod")
+  const [placing, setPlacing] = useState(false)
+  const [error, setError] = useState("")
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value })
+  }
+
+  const totalAmount = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
+
+  const handlePlaceOrder = async (e) => {
+    e.preventDefault()
+
+    if (cartItems.length === 0) {
+      setError("Your cart is empty.")
+      return
+    }
+
+    // Catch a malformed cart item before it hits the backend, and name the culprit
+    // instead of letting it surface as an opaque 500 error.
+    const invalidItem = cartItems.find((item) => !(item.id || item._id))
+    if (invalidItem) {
+      setError(
+        `"${invalidItem.name || "An item"}" in your cart is missing its product ID — remove it and re-add it from the product page.`
+      )
+      return
+    }
+
+    setPlacing(true)
+    setError("")
+
+    const token = localStorage.getItem("token")
+
+    const payload = {
+      items: cartItems.map((item) => ({
+        product: item.id || item._id,
+        name: item.name,
+        image: item.image,
+        price: item.price,
+        quantity: item.quantity,
+      })),
+      totalAmount,
+      shippingAddress: formData,
+      paymentMethod,
+    }
+
+    try {
+      const res = await axios.post("http://localhost:3000/orders/create", payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      if (res.data.success) {
+        dispatch(clearCart())
+        navigate(`/order-confirmation/${res.data.order._id}`)
+      }
+    } catch (err) {
+      console.error("Place order error:", err)
+      setError(err.response?.data?.message || "Failed to place order. Please try again.")
+    } finally {
+      setPlacing(false)
+    }
+  }
 
   return (
     <div className="bg-blush min-h-screen py-12 px-4 md:px-6">
-      <div className="max-w-2xl mx-auto">
-        
-        {/* Success Card */}
-        <div className="bg-cream rounded-2xl shadow-lg border border-beige overflow-hidden">
-          
-          {/* Top Green Banner */}
-          <div className="bg-forest py-8 px-6 text-center">
-            <div className="w-16 h-16 bg-moss rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                className="h-8 w-8 text-cream" 
-                fill="none" 
-                viewBox="0 0 24 24" 
-                stroke="currentColor"
-              >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2.5} 
-                  d="M5 13l4 4L19 7" 
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-2xl md:text-3xl font-poppins font-bold text-forest text-center mb-8">
+          Checkout
+        </h1>
+
+        <div className="grid md:grid-cols-5 gap-6">
+          {/* Shipping form */}
+          <form
+            onSubmit={handlePlaceOrder}
+            className="md:col-span-3 bg-cream rounded-2xl border border-beige shadow-sm p-6 md:p-8"
+          >
+            <h2 className="font-poppins font-bold text-forest text-lg mb-4">Shipping Address</h2>
+
+            <label className="block text-sm font-medium text-forest mb-1">Full Name</label>
+            <input
+              name="fullName" value={formData.fullName} onChange={handleChange} required
+              className="w-full border border-sage rounded-xl px-4 py-3 mb-3 focus:outline-none focus:ring-2 focus:ring-forest bg-white"
+              placeholder="Suruthi Vijaya"
+            />
+
+            <label className="block text-sm font-medium text-forest mb-1">Phone</label>
+            <input
+              name="phone" value={formData.phone} onChange={handleChange} required
+              className="w-full border border-sage rounded-xl px-4 py-3 mb-3 focus:outline-none focus:ring-2 focus:ring-forest bg-white"
+              placeholder="9876543210"
+            />
+
+            <label className="block text-sm font-medium text-forest mb-1">Address</label>
+            <input
+              name="addressLine" value={formData.addressLine} onChange={handleChange} required
+              className="w-full border border-sage rounded-xl px-4 py-3 mb-3 focus:outline-none focus:ring-2 focus:ring-forest bg-white"
+              placeholder="12, Gandhi Street"
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-forest mb-1">City</label>
+                <input
+                  name="city" value={formData.city} onChange={handleChange} required
+                  className="w-full border border-sage rounded-xl px-4 py-3 mb-3 focus:outline-none focus:ring-2 focus:ring-forest bg-white"
+                  placeholder="Madurai"
                 />
-              </svg>
-            </div>
-            <h1 className="text-cream text-2xl md:text-3xl font-poppins font-bold">
-              Order Confirmed!
-            </h1>
-            <p className="text-cream/80 font-inter mt-2 text-sm md:text-base">
-              Thank you for shopping with Fresh Farm
-            </p>
-          </div>
-
-          {/* Order Details */}
-          <div className="p-6 md:p-8">
-            
-            {/* Order Info Grid */}
-            <div className="grid grid-cols-2 gap-4 mb-8">
-              <div className="bg-blush rounded-xl p-4 text-center">
-                <p className="text-forest/60 text-xs font-inter uppercase tracking-wider mb-1">
-                  Order ID
-                </p>
-                <p className="text-forest font-bold font-poppins text-sm md:text-base">
-                  #{orderId}
-                </p>
               </div>
-              <div className="bg-blush rounded-xl p-4 text-center">
-                <p className="text-forest/60 text-xs font-inter uppercase tracking-wider mb-1">
-                  Order Date
-                </p>
-                <p className="text-forest font-bold font-poppins text-sm md:text-base">
-                  {orderDate}
-                </p>
-              </div>
-              <div className="bg-blush rounded-xl p-4 text-center col-span-2">
-                <p className="text-forest/60 text-xs font-inter uppercase tracking-wider mb-1">
-                  Estimated Delivery
-                </p>
-                <p className="text-moss font-bold font-poppins text-sm md:text-base">
-                  {estimatedDelivery}
-                </p>
-              </div>
-            </div>
-
-            {/* Progress Steps */}
-            <div className="mb-8">
-              <div className="flex items-center justify-between relative">
-                <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-beige -translate-y-1/2" />
-                
-                <div className="relative z-10 flex flex-col items-center gap-2">
-                  <div className="w-8 h-8 bg-forest rounded-full flex items-center justify-center">
-                    <svg className="w-4 h-4 text-cream" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <span className="text-xs font-inter text-forest font-medium">Ordered</span>
-                </div>
-
-                <div className="relative z-10 flex flex-col items-center gap-2">
-                  <div className="w-8 h-8 bg-beige rounded-full flex items-center justify-center">
-                    <div className="w-2.5 h-2.5 bg-forest/30 rounded-full" />
-                  </div>
-                  <span className="text-xs font-inter text-forest/50">Packed</span>
-                </div>
-
-                <div className="relative z-10 flex flex-col items-center gap-2">
-                  <div className="w-8 h-8 bg-beige rounded-full flex items-center justify-center">
-                    <div className="w-2.5 h-2.5 bg-forest/30 rounded-full" />
-                  </div>
-                  <span className="text-xs font-inter text-forest/50">Shipped</span>
-                </div>
-
-                <div className="relative z-10 flex flex-col items-center gap-2">
-                  <div className="w-8 h-8 bg-beige rounded-full flex items-center justify-center">
-                    <div className="w-2.5 h-2.5 bg-forest/30 rounded-full" />
-                  </div>
-                  <span className="text-xs font-inter text-forest/50">Delivered</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Delivery Note */}
-            <div className="bg-sage/10 border border-sage/20 rounded-xl p-4 mb-8 flex items-start gap-3">
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                className="h-5 w-5 text-moss flex-shrink-0 mt-0.5" 
-                fill="none" 
-                viewBox="0 0 24 24" 
-                stroke="currentColor"
-              >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
+              <div>
+                <label className="block text-sm font-medium text-forest mb-1">State</label>
+                <input
+                  name="state" value={formData.state} onChange={handleChange} required
+                  className="w-full border border-sage rounded-xl px-4 py-3 mb-3 focus:outline-none focus:ring-2 focus:ring-forest bg-white"
+                  placeholder="Tamil Nadu"
                 />
-              </svg>
-              <p className="text-forest/80 text-sm font-inter leading-relaxed">
-                We'll send you an email with tracking details once your order is shipped. 
-                Our team carefully packs each plant to ensure it arrives healthy and happy.
+              </div>
+            </div>
+
+            <label className="block text-sm font-medium text-forest mb-1">Pincode</label>
+            <input
+              name="pincode" value={formData.pincode} onChange={handleChange} required
+              className="w-full border border-sage rounded-xl px-4 py-3 mb-5 focus:outline-none focus:ring-2 focus:ring-forest bg-white"
+              placeholder="625001"
+            />
+
+            <h2 className="font-poppins font-bold text-forest text-lg mb-3">Payment Method</h2>
+            <div className="flex gap-3 mb-6">
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("cod")}
+                className={`flex-1 py-3 rounded-xl font-medium border-2 transition-all ${
+                  paymentMethod === "cod" ? "bg-forest text-cream border-forest" : "border-sage text-forest"
+                }`}
+              >
+                Cash on Delivery
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("online")}
+                className={`flex-1 py-3 rounded-xl font-medium border-2 transition-all ${
+                  paymentMethod === "online" ? "bg-forest text-cream border-forest" : "border-sage text-forest"
+                }`}
+              >
+                Pay Online
+              </button>
+            </div>
+
+            {error && (
+              <p className="text-red-600 text-sm mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                {error}
               </p>
-            </div>
+            )}
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={() => navigate('/')}
-                className="flex-1 bg-forest text-cream font-poppins font-medium py-3 px-6 rounded-xl hover:bg-moss transition-all duration-300 text-center"
-              >
-                Continue Shopping
-              </button>
-              <button
-                onClick={() => navigate('/plants')}
-                className="flex-1 bg-cream text-forest border-2 border-forest font-poppins font-medium py-3 px-6 rounded-xl hover:bg-forest hover:text-cream transition-all duration-300 text-center"
-              >
-                Browse Plants
-              </button>
+            <button
+              type="submit"
+              disabled={placing || cartItems.length === 0}
+              className="w-full bg-forest text-cream py-3.5 rounded-xl font-poppins font-medium hover:bg-moss transition-all disabled:opacity-50 shadow-lg"
+            >
+              {placing ? "Placing Order..." : `Place Order — ₹${totalAmount.toLocaleString()}`}
+            </button>
+          </form>
+
+          {/* Cart summary */}
+          <div className="md:col-span-2 bg-cream rounded-2xl border border-beige shadow-sm p-6 h-fit">
+            <h2 className="font-poppins font-bold text-forest text-lg mb-4">Order Summary</h2>
+            <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+              {cartItems.map((item) => (
+                <div key={item.id} className="flex items-center gap-3">
+                  <div className="w-14 h-14 bg-blush rounded-lg overflow-hidden flex-shrink-0">
+                    <img
+                      src={item.image || "https://placehold.co/100x100?text=Fresh+Farm"}
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.onerror = null
+                        e.target.src = "https://placehold.co/100x100?text=Fresh+Farm"
+                      }}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-forest font-medium text-sm truncate">{item.name}</p>
+                    <p className="text-sage text-xs">Qty: {item.quantity}</p>
+                  </div>
+                  <p className="text-forest font-bold text-sm">₹{item.price * item.quantity}</p>
+                </div>
+              ))}
+            </div>
+            <div className="border-t border-beige mt-4 pt-4 flex justify-between">
+              <span className="font-poppins font-bold text-forest">Total</span>
+              <span className="font-poppins font-bold text-forest">₹{totalAmount.toLocaleString()}</span>
             </div>
           </div>
         </div>
-
-        {/* Trust Badges */}
-        <div className="mt-8 grid grid-cols-3 gap-4">
-          <div className="text-center">
-            <div className="w-10 h-10 bg-cream rounded-full flex items-center justify-center mx-auto mb-2 shadow-sm">
-              <svg className="w-5 h-5 text-moss" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-5m6 9a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <p className="text-forest/70 text-xs font-inter">Quality Assured</p>
-          </div>
-          <div className="text-center">
-            <div className="w-10 h-10 bg-cream rounded-full flex items-center justify-center mx-auto mb-2 shadow-sm">
-              <svg className="w-5 h-5 text-moss" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <p className="text-forest/70 text-xs font-inter">Fast Delivery</p>
-          </div>
-          <div className="text-center">
-            <div className="w-10 h-10 bg-cream rounded-full flex items-center justify-center mx-auto mb-2 shadow-sm">
-              <svg className="w-5 h-5 text-moss" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-              </svg>
-            </div>
-            <p className="text-forest/70 text-xs font-inter">Secure Payment</p>
-          </div>
-        </div>
-
       </div>
     </div>
   )

@@ -1,19 +1,25 @@
 import React from 'react'
-import products from '@/data/Products'
 import ProductGrid from '@/components/ProductGrid'
 import SectionHeader from '@/components/SectionHeader'
+import { useProducts } from '@/hooks/useProducts'
 
 const Seeds = () => {
-  const seeds = products.filter((p) => p.category === 'seeds')
+  const { products: seeds, loading } = useProducts('seeds')
 
   return (
-    <section className="bg-beige min-h-screen py-16 px-4 md:px-6">
+    <section className="bg-beige min-h-screen pt-32 pb-16 px-4 md:px-6">
       <div className="max-w-6xl mx-auto">
         <SectionHeader
           title="Seeds"
-          subtitle="Start your garden from scratch with premium quality seeds"
+          subtitle="Start your own garden from scratch"
         />
-        <ProductGrid products={seeds} columns={5} />
+        {loading ? (
+          <p className="text-center text-sage py-12">Loading seeds...</p>
+        ) : seeds.length === 0 ? (
+          <p className="text-center text-sage py-12">No seeds available right now.</p>
+        ) : (
+          <ProductGrid products={seeds} columns={5} />
+        )}
       </div>
     </section>
   )
